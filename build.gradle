@@ -23,6 +23,10 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.10.2"
     api "com.devbuild:waveshare213v2:0.0.1"
+
+    api "org.slf4j:slf4j-api:1.7.30"
+    api "ch.qos.logback:logback-classic:1.2.3"
+    api "ch.qos.logback:logback-core:1.2.3"
 }
 
 compileKotlin {
