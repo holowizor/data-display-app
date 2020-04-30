@@ -1,4 +1,4 @@
-package com.devbuild.ddapp.gesture
+package com.devbuild.ddapp
 
 import com.pi4j.io.gpio.GpioFactory
 import com.pi4j.io.gpio.Pin
@@ -8,20 +8,15 @@ import com.pi4j.io.gpio.event.GpioPinListenerDigital
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 
-val logger = LoggerFactory.getLogger("GestureDetector")
-
 enum class GestureType {
     N_CLICK, LONG_PRESS
 }
 
 data class GestureEvent(val type: GestureType, val amount: Int)
 
-//@FunctionalInterface
-//interface GestureListener {
-//    fun onGesture(gestureEvent: GestureEvent)
-//}
-
 class GestureDetector(pin: Pin) : GpioPinListenerDigital {
+    val log = LoggerFactory.getLogger("GestureDetector")
+
     init {
         GpioFactory
             .getInstance()
@@ -32,19 +27,23 @@ class GestureDetector(pin: Pin) : GpioPinListenerDigital {
     private val listeners = ArrayList<(GestureEvent) -> Unit>()
     fun addListener(listener: (GestureEvent) -> Unit) = listeners.add(listener)
 
-    @Volatile private var t0 = 0L
-    @Volatile private var t1 = 0L
-    @Volatile private var clickCount = 0
+    @Volatile
+    private var t0 = 0L
+    @Volatile
+    private var t1 = 0L
+    @Volatile
+    private var clickCount = 0
     private val executor = Executors.newCachedThreadPool()
-    @Volatile private var lastClickCountThread: ClickCountRunnable? = null
+    @Volatile
+    private var lastClickCountThread: ClickCountRunnable? = null
 
     override fun handleGpioPinDigitalStateChangeEvent(event: GpioPinDigitalStateChangeEvent?) {
         if (event?.state == PinState.HIGH) {
-            logger.info("state high")
+            log.info("state high")
             lastClickCountThread?.send = false
             t0 = System.currentTimeMillis();
         } else if (event?.state == PinState.LOW) {
-            logger.info("state low")
+            log.info("state low")
             t1 = System.currentTimeMillis()
             if (t1 - t0 < 500) {
                 clickCount++
@@ -74,12 +73,12 @@ class GestureDetector(pin: Pin) : GpioPinListenerDigital {
 
     private fun sendGestureEvent(type: GestureType, amount: Int) =
         listeners.forEach {
-            logger.info("sending $type, $amount event")
+            log.info("sending $type, $amount event")
             it.invoke(GestureEvent(type, amount))
         }
 
     private fun reset() {
-        logger.info("resetting counters")
+        log.info("resetting counters")
         t0 = 0L
         t1 = 0L
         clickCount = 0

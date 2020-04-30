@@ -14,5 +14,5 @@ interface DataProvider {
 }
 
 interface ImageProvider {
-    fun provideImage(dataProvider: DataProvider): BufferedImage
+    fun provideImage(dataProvider: DataProvider): List<BufferedImage>
 }

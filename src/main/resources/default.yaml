@@ -1,0 +1,10 @@
+providers:
+  - alias: contagion
+    refreshRate: 5000
+    dataProvider:
+      className: com.devbuild.ddapp.InfectionsInPolandDataProvider
+      config:
+        a: "test"
+        b: 123
+    imageProvider:
+      className: com.devbuild.ddapp.InfectionsInPolandImageProvider

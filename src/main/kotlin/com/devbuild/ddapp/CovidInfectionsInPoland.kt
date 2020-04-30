@@ -35,7 +35,7 @@ class InfectionsInPolandDataProvider : DataProvider {
 }
 
 class InfectionsInPolandImageProvider : ImageProvider {
-    override fun provideImage(dataProvider: DataProvider): BufferedImage {
+    override fun provideImage(dataProvider: DataProvider): List<BufferedImage> {
         val data = dataProvider.provideData()
 
         val image = BufferedImage(250, 122, BufferedImage.TYPE_INT_RGB)
@@ -62,6 +62,6 @@ class InfectionsInPolandImageProvider : ImageProvider {
         g2d.drawString("DECEASED: ${data.get<Int>("DECEASED")}", 96, 90)
         g2d.dispose()
 
-        return image
+        return listOf(image)
     }
 }
