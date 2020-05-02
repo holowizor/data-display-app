@@ -7,6 +7,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import java.awt.Color
 import java.awt.Font
 import java.awt.image.BufferedImage
+import java.io.File
 import java.net.URL
 import java.time.Instant
 import java.time.ZoneId
@@ -20,8 +21,8 @@ class WeatherDataProvider(val apiKey: String, val city: String = "Wroclaw", val 
     DataProvider {
 
     override fun provideData(): GenericData = GenericData().apply {
-        val forecast = getForecast()
-        put("FORECAST", forecast)
+        put("FORECAST", getForecast())
+        put("CITY", city)
     }
 
     private fun getForecast(): Forecast {
@@ -34,6 +35,13 @@ class WeatherDataProvider(val apiKey: String, val city: String = "Wroclaw", val 
 class WeatherImageProvider : ImageProvider {
     override fun provideImage(dataProvider: DataProvider): List<BufferedImage> {
         val data = dataProvider.provideData()
+        val forecast = data.get<Forecast>("FORECAST")
+        val city = data.get<String>("CITY")
+
+        val dd = forecast.list[0].dt
+        val dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(dd * 1000L), ZoneOffset.UTC)
+        val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.of("Europe/Warsaw"))
+        val dateTime = fmt.format(dt)
 
         val image = BufferedImage(250, 122, BufferedImage.TYPE_INT_RGB)
 
@@ -41,26 +49,42 @@ class WeatherImageProvider : ImageProvider {
         g2d.background = Color.white
         g2d.clearRect(0, 0, 250, 122)
 
-        g2d.drawImage(
-            ImageIO.read(InfectionsInPolandImageProvider::class.java.getResourceAsStream("/pipboy-doctor.png")),
-            0,
-            0,
-            null
-        )
         g2d.color = Color.BLACK
-
         g2d.font =
             Font.createFont(
                 Font.TRUETYPE_FONT,
-                InfectionsInPolandImageProvider::class.java.getResourceAsStream("/fallout.ttf")
-            ).deriveFont(20.0f)
-        g2d.drawString("COVID-19 IN POLAND", 96, 30)
-        g2d.drawString("INFECTED: ${data.get<Int>("INFECTED")}", 96, 60)
-        g2d.drawString("DECEASED: ${data.get<Int>("DECEASED")}", 96, 90)
+                WeatherImageProvider::class.java.getResourceAsStream("/fallout.ttf")
+            ).deriveFont(18.0f)
+
+        g2d.drawString("$city weather, $dateTime", 6, 24)
+        g2d.drawString("Temp C  Wind m/s  Pressure  Fall mm", 6, 44)
+
+        g2d.drawString(String.format("%.1f", forecast.list[0].main.temp), 6, 65)
+        g2d.drawString(String.format("%.1f", getWind(forecast.list[0])), 60, 65)
+        g2d.drawString(String.format("%d", forecast.list[0].main.groundLevelPressure), 125, 65)
+        g2d.drawString(String.format("%.1f", getFall(forecast.list[0])), 187, 65)
+
+        g2d.drawString("+6h", 214, 73)
+
+        g2d.drawString(String.format("%.1f", forecast.list[2].main.temp), 6, 85)
+        g2d.drawString(String.format("%.1f", getWind(forecast.list[2])), 60, 85)
+        g2d.drawString(String.format("%d", forecast.list[2].main.groundLevelPressure), 125, 85)
+        g2d.drawString(String.format("%.1f", getFall(forecast.list[2])), 187, 85)
+
+        g2d.drawString("+6h", 214, 93)
+
+        g2d.drawString(String.format("%.1f", forecast.list[4].main.temp), 6, 105)
+        g2d.drawString(String.format("%.1f", getWind(forecast.list[4])), 60, 105)
+        g2d.drawString(String.format("%d", forecast.list[4].main.groundLevelPressure), 125, 105)
+        g2d.drawString(String.format("%.1f", getFall(forecast.list[4])), 187, 105)
         g2d.dispose()
 
         return listOf(image)
     }
+
+    fun getWind(forecastItem: ForecastItem): Float = forecastItem.wind?.speed ?: 0.0f
+
+    fun getFall(forecastItem: ForecastItem): Float = forecastItem.rain?.last3h ?: forecastItem.snow?.last3h ?: 0.0f
 }
 
 data class Forecast(val list: List<ForecastItem>)
@@ -84,15 +108,7 @@ data class ForecastFall(@JsonProperty("3h") val last3h: Float)
 
 fun main() {
     val dataProvider = WeatherDataProvider("5db2640de7dbeb2a3327b13596b565cb")
-    val forecast: Forecast = dataProvider.provideData().get("FORECAST")
-    println(forecast)
-
-    val dd = 1587502800L // unix seconds in utc
-    val dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(dd * 1000L), ZoneOffset.UTC)
-    val localTime = dt.withZoneSameLocal(ZoneId.of("Europe/Warsaw"))
-    val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.of("Europe/Warsaw"))
-
-    println(dt)
-    println(localTime)
-    println(fmt.format(dt))
+    val imageProvider = WeatherImageProvider()
+    val images = imageProvider.provideImage(dataProvider)
+    ImageIO.write(images[0], "png", File("weather.png"));
 }
