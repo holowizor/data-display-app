@@ -40,6 +40,8 @@ object DataVault {
             val dataProvider = Class.forName(it.dataProvider.className).kotlin.createInstance() as DataProvider
             val imageProvider = Class.forName(it.imageProvider.className).kotlin.createInstance() as ImageProvider
 
+            it.dataProvider.config?.let { config -> dataProvider.config(config) }
+
             GlobalScope.launch {
                 imageMap[it.alias] = imageProvider.provideImage(dataProvider)
                 delay(it.refreshRate.toLong())

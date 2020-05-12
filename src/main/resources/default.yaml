@@ -1,10 +1,17 @@
 providers:
+  - alias: weather
+    refreshRate: 5000
+    dataProvider:
+      className: com.devbuild.ddapp.WeatherDataProvider
+      config:
+        apiKey: "5db2640de7dbeb2a3327b13596b565cb"
+        city: "Wroclaw"
+        units: "metric"
+    imageProvider:
+      className: com.devbuild.ddapp.WeatherImageProvider
   - alias: contagion
     refreshRate: 5000
     dataProvider:
       className: com.devbuild.ddapp.InfectionsInPolandDataProvider
-      config:
-        a: "test"
-        b: 123
     imageProvider:
       className: com.devbuild.ddapp.InfectionsInPolandImageProvider

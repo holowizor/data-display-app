@@ -11,6 +11,7 @@ class GenericData {
 
 interface DataProvider {
     fun provideData(): GenericData
+    fun config(config: Map<String, Any>) {}
 }
 
 interface ImageProvider {

@@ -16,13 +16,21 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import javax.imageio.ImageIO
 
-//Wroclaw, metric, 5db2640de7dbeb2a3327b13596b565cb
-class WeatherDataProvider(val apiKey: String, val city: String = "Wroclaw", val units: String = "metric") :
-    DataProvider {
+class WeatherDataProvider() : DataProvider {
+
+    var apiKey = ""
+    var city = ""
+    var units = ""
 
     override fun provideData(): GenericData = GenericData().apply {
         put("FORECAST", getForecast())
         put("CITY", city)
+    }
+
+    override fun config(config: Map<String, Any>) {
+        apiKey = config["apiKey"] as? String ?: "invalid"
+        city = config["city"] as? String ?: "Wroclaw"
+        units = config["units"] as? String ?: "metric"
     }
 
     private fun getForecast(): Forecast {
@@ -105,10 +113,3 @@ data class ForecastMain(
 
 data class ForecastWind(val speed: Float, val deg: Int)
 data class ForecastFall(@JsonProperty("3h") val last3h: Float)
-
-fun main() {
-    val dataProvider = WeatherDataProvider("5db2640de7dbeb2a3327b13596b565cb")
-    val imageProvider = WeatherImageProvider()
-    val images = imageProvider.provideImage(dataProvider)
-    ImageIO.write(images[0], "png", File("weather.png"));
-}
