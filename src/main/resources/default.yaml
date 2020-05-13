@@ -1,5 +1,5 @@
 providers:
-  - alias: weather
+  - alias: a_weather
     refreshRate: 5000
     dataProvider:
       className: com.devbuild.ddapp.WeatherDataProvider
@@ -9,7 +9,7 @@ providers:
         units: "metric"
     imageProvider:
       className: com.devbuild.ddapp.WeatherImageProvider
-  - alias: contagion
+  - alias: b_contagion
     refreshRate: 5000
     dataProvider:
       className: com.devbuild.ddapp.InfectionsInPolandDataProvider

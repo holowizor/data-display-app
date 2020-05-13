@@ -7,6 +7,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.awt.image.BufferedImage
+import java.util.*
 import kotlin.reflect.full.createInstance
 
 fun yamlObjectMapper(): ObjectMapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
@@ -32,7 +33,7 @@ object Configuration {
 }
 
 object DataVault {
-    private val imageMap = HashMap<String, List<BufferedImage>>()
+    private val imageMap = TreeMap<String, List<BufferedImage>>()
 
     fun init() {
         val cnf = Configuration.readDefaultConfig()
