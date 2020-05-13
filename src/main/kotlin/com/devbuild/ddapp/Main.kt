@@ -21,7 +21,7 @@ import kotlin.system.exitProcess
 @Volatile
 var keepRunning = true
 
-fun main0() {
+fun main() {
     val log = LoggerFactory.getLogger("DisplayApp")
     Display.init()
 
@@ -113,10 +113,6 @@ object Display {
     private fun clean() {
         Waveshare213v2.clear(0xFFu)
     }
-}
-
-fun main() {
-    ImageIO.write(ScreenSaver.render(), "png", File("screensaver.png"));
 }
 
 object ScreenSaver {
