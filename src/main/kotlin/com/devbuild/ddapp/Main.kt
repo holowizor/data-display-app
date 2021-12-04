@@ -1,5 +1,7 @@
 package com.devbuild.ddapp
 
+import com.devbuild.ddapp.eventsource.EventType
+import com.devbuild.ddapp.eventsource.GPIOEventSource
 import com.devbuild.waveshare213v2.Waveshare213v2
 import com.pi4j.io.gpio.GpioFactory
 import com.pi4j.io.gpio.RaspiPin
@@ -29,15 +31,14 @@ fun main() {
     DataVault.init()
 
     log.info("initializing click button gestures")
-    val gestureDetector = GestureDetector(RaspiPin.GPIO_02)
-    gestureDetector.addListener {
+    val gestureDetector = GestureDetector(GPIOEventSource(RaspiPin.GPIO_02)) {
         log.info("got gesture event {}", it)
-        if (it.type == GestureType.N_CLICK && it.amount == 1) {
+        if (it.type == EventType.N_CLICK && it.value == 1L) {
             Display.start()
-        } else if (it.type == GestureType.N_CLICK && it.amount == 2) {
+        } else if (it.type == EventType.N_CLICK && it.value == 2L) {
             Display.stop()
             Display.startIdle()
-        } else if (it.type == GestureType.LONG_PRESS && it.amount >= 3) {
+        } else if (it.type == EventType.LONG_PRESS && it.value >= 3) {
             Display.stop()
             Display.sleep()
             GpioFactory.getInstance().shutdown()
