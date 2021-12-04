@@ -1,7 +1,6 @@
 package com.devbuild.ddapp.eventsource
 
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import lc.kra.system.keyboard.GlobalKeyboardHook
@@ -40,9 +39,8 @@ class KeyboardEventSource(
             }
             GlobalScope.launch {
                 delay(500L)
-                val clicks = keyCounts[event.virtualKeyCode]
-                if (clicks != null) {
-                    sendGestureEvent(Event(EventType.N_CLICK, clicks.get()))
+                keyCounts[event.virtualKeyCode]?.let {
+                    sendGestureEvent(Event(EventType.N_CLICK, it.get()))
                 }
             }
         } else {

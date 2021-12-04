@@ -2,6 +2,7 @@ package com.devbuild.ddapp
 
 import com.devbuild.ddapp.eventsource.EventType
 import com.devbuild.ddapp.eventsource.KeyboardEventSource
+import com.devbuild.ddapp.gesture.GestureDetector
 import org.slf4j.LoggerFactory
 import kotlin.system.exitProcess
 

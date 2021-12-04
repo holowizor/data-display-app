@@ -1,4 +1,4 @@
-package com.devbuild.ddapp
+package com.devbuild.ddapp.gesture
 
 import com.devbuild.ddapp.eventsource.Event
 import com.devbuild.ddapp.eventsource.EventListener

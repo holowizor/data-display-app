@@ -2,6 +2,7 @@ package com.devbuild.ddapp
 
 import com.devbuild.ddapp.eventsource.EventType
 import com.devbuild.ddapp.eventsource.GPIOEventSource
+import com.devbuild.ddapp.gesture.GestureDetector
 import com.devbuild.waveshare213v2.Waveshare213v2
 import com.pi4j.io.gpio.GpioFactory
 import com.pi4j.io.gpio.RaspiPin
