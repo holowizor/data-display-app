@@ -8,10 +8,10 @@ providers:
         city: "Wroclaw"
         units: "metric"
     dataRenderer:
-      className: com.devbuild.ddapp.WeatherDataRenderer
+      className: com.devbuild.ddapp.WeatherConsoleRenderer
   - alias: b_contagion
     refreshRate: 5000
     dataProvider:
       className: com.devbuild.ddapp.InfectionsInPolandDataProvider
     dataRenderer:
-      className: com.devbuild.ddapp.InfectionsInPolandDataRenderer
+      className: com.devbuild.ddapp.InfectionsInPolandConsoleRenderer

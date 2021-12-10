@@ -25,12 +25,12 @@ class KeyboardEventSource(
 
     // if key is held, then multiple pressed events are sent
     override fun keyPressed(event: GlobalKeyEvent) {
-        log.info("key down ${event.virtualKeyCode}")
+        //log.info("key down ${event.virtualKeyCode}")
         pressedKeys.putIfAbsent(event.virtualKeyCode, System.currentTimeMillis())
     }
 
     override fun keyReleased(event: GlobalKeyEvent) {
-        log.info("key up ${event.virtualKeyCode}")
+        //log.info("key up ${event.virtualKeyCode}")
         val t0 = pressedKeys.remove(event.virtualKeyCode) ?: 0L
         val t1 = System.currentTimeMillis()
         if (t1 - t0 < 500) {

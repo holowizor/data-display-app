@@ -6,7 +6,6 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.awt.image.BufferedImage
 import java.util.*
 import kotlin.reflect.full.createInstance
 
@@ -17,14 +16,14 @@ data class CnfProvider(
     val alias: String,
     val refreshRate: Int,
     val dataProvider: CnfProviderConfig,
-    val imageProvider: CnfProviderConfig
+    val dataRenderer: CnfProviderConfig
 )
 
 data class CnfProviderConfig(val className: String, val config: Map<String, Any>?)
 
 object Configuration {
-    fun readDefaultConfig() =
-        readConfig(Configuration.javaClass.getResourceAsStream("/default.yaml").bufferedReader().use { it.readText() })
+    fun readDefaultConfig(configResource: String = "/default.yaml") =
+        readConfig(Configuration.javaClass.getResourceAsStream(configResource).bufferedReader().use { it.readText() })
 
     fun readConfig(yaml: String): CnfMain {
         val mapper = yamlObjectMapper()
@@ -32,23 +31,23 @@ object Configuration {
     }
 }
 
-object DataVault {
-    private val imageMap = TreeMap<String, List<BufferedImage>>()
+class DataVault<T> {
+    private val dataMap = TreeMap<String, List<T>>()
 
-    fun init() {
-        val cnf = Configuration.readDefaultConfig()
+    fun init(configResource: String = "/default.yaml") {
+        val cnf = Configuration.readDefaultConfig(configResource)
         cnf.providers.forEach {
             val dataProvider = Class.forName(it.dataProvider.className).kotlin.createInstance() as DataProvider
-            val imageProvider = Class.forName(it.imageProvider.className).kotlin.createInstance() as ImageProvider
+            val dataRenderer = Class.forName(it.dataRenderer.className).kotlin.createInstance() as DataRenderer<T>
 
             it.dataProvider.config?.let { config -> dataProvider.config(config) }
 
             GlobalScope.launch {
-                imageMap[it.alias] = imageProvider.provideImage(dataProvider)
+                dataMap[it.alias] = dataRenderer.renderData(dataProvider)
                 delay(it.refreshRate.toLong())
             }
         }
     }
 
-    fun provideImages(): List<BufferedImage> = imageMap.values.flatten()
+    fun provideData(): List<T> = dataMap.values.flatten()
 }

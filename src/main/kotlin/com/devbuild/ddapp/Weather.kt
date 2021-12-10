@@ -7,14 +7,12 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import java.awt.Color
 import java.awt.Font
 import java.awt.image.BufferedImage
-import java.io.File
 import java.net.URL
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import javax.imageio.ImageIO
 
 class WeatherDataProvider() : DataProvider {
 
@@ -40,8 +38,8 @@ class WeatherDataProvider() : DataProvider {
     }
 }
 
-class WeatherImageProvider : ImageProvider {
-    override fun provideImage(dataProvider: DataProvider): List<BufferedImage> {
+class WeatherDataRenderer : DataRenderer<BufferedImage> {
+    override fun renderData(dataProvider: DataProvider): List<BufferedImage> {
         val data = dataProvider.provideData()
         val forecast = data.get<Forecast>("FORECAST")
         val city = data.get<String>("CITY")
@@ -61,7 +59,7 @@ class WeatherImageProvider : ImageProvider {
         g2d.font =
             Font.createFont(
                 Font.TRUETYPE_FONT,
-                WeatherImageProvider::class.java.getResourceAsStream("/fallout.ttf")
+                WeatherDataRenderer::class.java.getResourceAsStream("/fallout.ttf")
             ).deriveFont(18.0f)
 
         g2d.drawString("$city weather, $dateTime", 6, 24)
@@ -93,6 +91,11 @@ class WeatherImageProvider : ImageProvider {
     fun getWind(forecastItem: ForecastItem): Float = forecastItem.wind?.speed ?: 0.0f
 
     fun getFall(forecastItem: ForecastItem): Float = forecastItem.rain?.last3h ?: forecastItem.snow?.last3h ?: 0.0f
+}
+
+class WeatherConsoleRenderer: DataRenderer<String> {
+    // FIXME
+    override fun renderData(dataProvider: DataProvider): List<String> = listOf<String>("weather....")
 }
 
 data class Forecast(val list: List<ForecastItem>)

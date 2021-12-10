@@ -34,8 +34,8 @@ class InfectionsInPolandDataProvider : DataProvider {
     private data class InfectedRegion(val region: String, val infectedCount: Int, val deceasedCount: Int)
 }
 
-class InfectionsInPolandImageProvider : ImageProvider {
-    override fun provideImage(dataProvider: DataProvider): List<BufferedImage> {
+class InfectionsInPolandDataRenderer : DataRenderer<BufferedImage> {
+    override fun renderData(dataProvider: DataProvider): List<BufferedImage> {
         val data = dataProvider.provideData()
 
         val image = BufferedImage(250, 122, BufferedImage.TYPE_INT_RGB)
@@ -45,7 +45,7 @@ class InfectionsInPolandImageProvider : ImageProvider {
         g2d.clearRect(0, 0, 250, 122)
 
         g2d.drawImage(
-            ImageIO.read(InfectionsInPolandImageProvider::class.java.getResourceAsStream("/pipboy-doctor.png")),
+            ImageIO.read(InfectionsInPolandDataRenderer::class.java.getResourceAsStream("/pipboy-doctor.png")),
             0,
             0,
             null
@@ -55,7 +55,7 @@ class InfectionsInPolandImageProvider : ImageProvider {
         g2d.font =
             Font.createFont(
                 Font.TRUETYPE_FONT,
-                InfectionsInPolandImageProvider::class.java.getResourceAsStream("/fallout.ttf")
+                InfectionsInPolandDataRenderer::class.java.getResourceAsStream("/fallout.ttf")
             ).deriveFont(20.0f)
         g2d.drawString("COVID-19 IN POLAND", 96, 30)
         g2d.drawString("INFECTED: ${data.get<Int>("INFECTED")}", 96, 60)
@@ -63,5 +63,12 @@ class InfectionsInPolandImageProvider : ImageProvider {
         g2d.dispose()
 
         return listOf(image)
+    }
+}
+
+class InfectionsInPolandConsoleRenderer : DataRenderer<String> {
+    override fun renderData(dataProvider: DataProvider): List<String> {
+        val data = dataProvider.provideData()
+        return listOf("INFECTED: ${data.get<Int>("INFECTED")}", "DECEASED: ${data.get<Int>("DECEASED")}")
     }
 }

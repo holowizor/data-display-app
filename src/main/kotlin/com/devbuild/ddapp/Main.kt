@@ -6,42 +6,37 @@ import com.devbuild.ddapp.gesture.GestureDetector
 import com.devbuild.waveshare213v2.Waveshare213v2
 import com.pi4j.io.gpio.GpioFactory
 import com.pi4j.io.gpio.RaspiPin
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import java.awt.Color
 import java.awt.Font
 import java.awt.image.BufferedImage
-import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import javax.imageio.ImageIO
 import kotlin.random.Random
 import kotlin.system.exitProcess
 
-@Volatile
-var keepRunning = true
-
 fun main() {
+    var keepRunning = true
+
     val log = LoggerFactory.getLogger("DisplayApp")
-    Display.init()
 
     log.info("setup data vault")
-    DataVault.init()
+    val dataVault = DataVault<BufferedImage>()
+    dataVault.init()
+
+    val display = Waveshare213v2Display(dataVault)
 
     log.info("initializing click button gestures")
     val gestureDetector = GestureDetector(GPIOEventSource(RaspiPin.GPIO_02)) {
         log.info("got gesture event {}", it)
         if (it.type == EventType.N_CLICK && it.value == 1L) {
-            Display.start()
+            display.start()
         } else if (it.type == EventType.N_CLICK && it.value == 2L) {
-            Display.stop()
-            Display.startIdle()
+            display.stop()
+            display.startIdle()
         } else if (it.type == EventType.LONG_PRESS && it.value >= 3) {
-            Display.stop()
-            Display.sleep()
+            display.stop()
+            display.sleep()
             GpioFactory.getInstance().shutdown()
             exitProcess(0)
         }
@@ -54,8 +49,8 @@ fun main() {
             log.info("shutting down...")
             keepRunning = false
             mainThread.join()
-            Display.stop()
-            Display.sleep()
+            display.stop()
+            display.sleep()
             GpioFactory.getInstance().shutdown()
         }
     })
@@ -67,59 +62,24 @@ fun main() {
     }
 }
 
-object Display {
-    private var job: Job? = null
-    private var idleJob: Job? = null
-
-    fun init() {
-        Waveshare213v2.fullUpdate()
-        Waveshare213v2.printImage(LoadingScreen.render())
-        startIdle()
-    }
-
-    fun start() {
-        idleJob?.let { it.cancel() }
-
-        if (job?.isActive == true) return
-
-        job = GlobalScope.launch {
-            val images = DataVault.provideImages()
-            repeat(images.size) {
-                Waveshare213v2.printImage(images[it])
-                ImageIO.write(images[it], "png", File("check$it.png"));
-                delay(5000L)
-            }
-            startIdle()
-        }
-    }
-
-    fun startIdle() {
-        if (idleJob?.isActive == true) return
-
-        idleJob = GlobalScope.launch {
-            delay(5000L)
-            Waveshare213v2.printImage(ScreenSaver.render())
-            delay(25000L)
-        }
-    }
-
-    fun stop() {
-        job?.let { it.cancel() }
-        clean()
-    }
-
-    fun sleep() {
-        Waveshare213v2.sleep()
-    }
-
-    private fun clean() {
-        Waveshare213v2.clear(0xFFu)
-    }
+class Waveshare213v2Consumer : DataConsumer<BufferedImage> {
+    override fun consume(data: BufferedImage) = Waveshare213v2.printImage(data)
+    override fun init() = Waveshare213v2.fullUpdate()
+    override fun sleep() = Waveshare213v2.sleep()
+    override fun clear() = Waveshare213v2.clear(0xFFu)
 }
 
-object ScreenSaver {
+class Waveshare213v2Display(
+    dataVault: DataVault<BufferedImage>,
+    consumer: DataConsumer<BufferedImage> = Waveshare213v2Consumer(),
+    screenSaver: SingleRenderer<BufferedImage> = BIScreenSaver(),
+    loadingScreen: SingleRenderer<BufferedImage> = BILoadingScreen(),
+    shutdownScreen: SingleRenderer<BufferedImage> = BIShutdownScreen(),
+) : Display<BufferedImage>(dataVault, consumer, screenSaver, loadingScreen, shutdownScreen)
 
-    fun render(): BufferedImage {
+class BIScreenSaver : SingleRenderer<BufferedImage> {
+
+    override fun render(): BufferedImage {
         val image = BufferedImage(250, 122, BufferedImage.TYPE_INT_RGB)
 
         val g2d = image.createGraphics()
@@ -127,11 +87,9 @@ object ScreenSaver {
         g2d.clearRect(0, 0, 250, 122)
 
         g2d.color = Color.BLACK
-        g2d.font =
-            Font.createFont(
-                Font.TRUETYPE_FONT,
-                WeatherImageProvider::class.java.getResourceAsStream("/fallout.ttf")
-            ).deriveFont(24.0f)
+        g2d.font = Font.createFont(
+            Font.TRUETYPE_FONT, WeatherDataRenderer::class.java.getResourceAsStream("/fallout.ttf")
+        ).deriveFont(24.0f)
 
         val time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
 
@@ -141,9 +99,9 @@ object ScreenSaver {
     }
 }
 
-object LoadingScreen {
+class BILoadingScreen : SingleRenderer<BufferedImage> {
 
-    fun render(): BufferedImage {
+    override fun render(): BufferedImage {
         val image = BufferedImage(250, 122, BufferedImage.TYPE_INT_RGB)
 
         val g2d = image.createGraphics()
@@ -151,11 +109,9 @@ object LoadingScreen {
         g2d.clearRect(0, 0, 250, 122)
 
         g2d.color = Color.BLACK
-        g2d.font =
-            Font.createFont(
-                Font.TRUETYPE_FONT,
-                WeatherImageProvider::class.java.getResourceAsStream("/fallout.ttf")
-            ).deriveFont(24.0f)
+        g2d.font = Font.createFont(
+            Font.TRUETYPE_FONT, WeatherDataRenderer::class.java.getResourceAsStream("/fallout.ttf")
+        ).deriveFont(24.0f)
 
         g2d.drawString("Starting up...", 10, 34)
 
@@ -163,9 +119,9 @@ object LoadingScreen {
     }
 }
 
-object ShutDownScreen {
+class BIShutdownScreen : SingleRenderer<BufferedImage> {
 
-    fun render(): BufferedImage {
+    override fun render(): BufferedImage {
         val image = BufferedImage(250, 122, BufferedImage.TYPE_INT_RGB)
 
         val g2d = image.createGraphics()
@@ -173,11 +129,9 @@ object ShutDownScreen {
         g2d.clearRect(0, 0, 250, 122)
 
         g2d.color = Color.BLACK
-        g2d.font =
-            Font.createFont(
-                Font.TRUETYPE_FONT,
-                WeatherImageProvider::class.java.getResourceAsStream("/fallout.ttf")
-            ).deriveFont(24.0f)
+        g2d.font = Font.createFont(
+            Font.TRUETYPE_FONT, WeatherDataRenderer::class.java.getResourceAsStream("/fallout.ttf")
+        ).deriveFont(24.0f)
 
         g2d.drawString("Shutting down...", 10, 34)
 
