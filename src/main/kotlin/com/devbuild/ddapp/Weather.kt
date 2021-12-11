@@ -13,6 +13,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 class WeatherDataProvider() : DataProvider {
 
@@ -95,7 +96,37 @@ class WeatherDataRenderer : DataRenderer<BufferedImage> {
 
 class WeatherConsoleRenderer: DataRenderer<String> {
     // FIXME
-    override fun renderData(dataProvider: DataProvider): List<String> = listOf<String>("weather....")
+    override fun renderData(dataProvider: DataProvider): List<String> {
+        val data = dataProvider.provideData()
+        val forecast = data.get<Forecast>("FORECAST")
+        val city = data.get<String>("CITY")
+
+        val dd = forecast.list[0].dt
+        val dt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(dd * 1000L), ZoneOffset.UTC)
+        val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.of("Europe/Warsaw"))
+        val dateTime = fmt.format(dt)
+
+        val list = LinkedList<String>()
+
+        list.add("$city weather, $dateTime")
+        list.add(forecastLine(forecast.list[0], 0L))
+        list.add(forecastLine(forecast.list[2], 6L))
+        list.add(forecastLine(forecast.list[4], 12L))
+
+        return list
+    }
+
+    private fun forecastLine(forecastItem: ForecastItem, hoursDiff: Long): String {
+        val temp = String.format("%.1f", forecastItem.main.temp)
+        val wind = String.format("%.1f", getWind(forecastItem))
+        val pressure = String.format("%d", forecastItem.main.groundLevelPressure)
+        val fall = String.format("%.1f", getFall(forecastItem))
+
+        return "+${hoursDiff}h ${temp}C ${wind}m/s ${pressure}hPa ${fall}mm"
+    }
+
+    fun getWind(forecastItem: ForecastItem): Float = forecastItem.wind?.speed ?: 0.0f
+    fun getFall(forecastItem: ForecastItem): Float = forecastItem.rain?.last3h ?: forecastItem.snow?.last3h ?: 0.0f
 }
 
 data class Forecast(val list: List<ForecastItem>)
